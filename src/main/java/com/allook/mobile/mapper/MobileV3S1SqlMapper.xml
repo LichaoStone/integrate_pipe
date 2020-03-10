@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.allook.mobile.mapper.MobileV3S1SqlMapper">
+   	
+   	<select id="isPunchRecord" parameterType="com.allook.mobile.bean.WorkAttendanceBean"  resultType="int">
+   		select count(*) from t_work_attendance where 1=1 and user_id=#{userKey} and punch_date=#{punchDate}
+   	</select>
+   	
+   	<update id="updatePunch" parameterType="com.allook.mobile.bean.WorkAttendanceBean">
+   		update 
+   			t_work_attendance
+   		set
+   			<if test='punchType=="0" '>
+   				morning_on_work_addr=#{morningOnWorkAddr},
+   				morning_on_work_outside=#{morningOnWorkOutside},
+   				morning_on_work_outside_reason=#{morningOnWorkOutsideReason},
+   				morning_on_work_remarks=#{morningOnWorkRemarks}
+   			</if>
+   			
+   			<if test='punchType=="1" '>
+   				morning_off_work=#{morningOffWork},
+   				morning_early=#{morningEarly},
+   				morning_off_work_addr=#{morningOffWorkAddr},
+   				morning_off_work_outside=#{morningOffWorkOutside},
+   				morning_off_work_outside_reason=#{morningOffWorkOutsideReason},
+   				morning_off_work_remarks=#{morningOffWorkRemarks}
+   			</if>
+   			
+   			<if test='punchType=="2" '>
+   				noon_on_work_addr=#{noonOnWorkAddr},
+   				noon_on_work_outside=#{noonOnWorkOutside},
+   				noon_on_work_outside_reason=#{noonOnWorkOutsideReason},
+   				noon_on_work_remarks=#{noonOnWorkRemarks}
+   			</if>
+   			
+   			<if test='punchType=="3" '>
+   				noon_off_work=#{noonOffWork},
+   				noon_early=#{noonEarly},
+   				noon_off_work_addr=#{noonOffWorkAddr},
+   				noon_off_work_outside=#{noonOffWorkOutside},
+   				noon_off_work_outside_reason=#{noonOffWorkOutsideReason},
+   				noon_off_work_remarks=#{noonOffWorkRemarks}
+   			</if>
+   		where
+   			1=1
+   			and user_id=#{userId}
+   			and punch_date=#{punchDate} 
+   	</update>
+   	
+   	
+   	<insert id="addPunch" parameterType="com.allook.mobile.bean.WorkAttendanceBean">
+   		insert into
+   			t_work_attendance
+   			(
+   				punch_id,
+   				user_id,
+   				punch_year,
+   				punch_month,
+   				punch_date,
+   				morning_on_work,
+   				morning_late,
+   				morning_on_work_addr,
+   				morning_on_work_outside,
+   				morning_on_work_outside_reason,
+   				morning_on_work_remarks,
+   				morning_off_work,
+   				morning_early,
+   				morning_off_work_addr,
+   				morning_off_work_outside,
+   				morning_off_work_outside_reason,
+   				morning_off_work_remarks,
+   				noon_on_work,
+   				noon_late,
+   				noon_on_work_addr,
+   				noon_on_work_outside,
+   				noon_on_work_outside_reason,
+   				noon_on_work_remarks,
+   				noon_off_work,
+   				noon_early,
+   				noon_off_work_addr,
+   				noon_off_work_outside,
+   				noon_off_work_outside_reason
+   			)
+   			values
+   			(
+   				#{punchId},
+   				#{userId},
+   				#{punchYear},
+   				#{punchMonth},
+   				#{punchDate},
+   				#{morningOnWork},
+   				#{morningLate},
+   				#{morningOnWorkAddr},
+   				#{morningOnWorkOutside},
+   				#{morningOnWorkOutsideReason},
+   				#{morningOnWorkRemarks},
+   				#{morningOffWork},
+   				#{morningEarly},
+   				#{morningOffWorkAddr},
+   				#{morningOffWorkOutside},
+   				#{morningOffWorkOutsideReason},
+   				#{morningOffWorkRemarks},
+   				#{noonOnWork},
+   				#{noonLate},
+   				#{noonOnWorkAddr},
+   				#{noonOnWorkOutside},
+   				#{noonOnWorkOutsideReason},
+   				#{noonOnWorkRemarks},
+   				#{noonOffWork},
+   				#{noonEarly},
+   				#{noonOffWorkAddr},
+   				#{noonOffWorkOutside},
+   				#{noonOffWorkOutsideReason}
+   			)
+   	</insert>
+   	
+   	<select id="getPunchList" parameterType="com.allook.mobile.bean.PunchBean"  resultType="map">
+		select 
+			punch_date as date, 
+			work_on_time, 
+			work_off_time, 
+			is_late, 
+			is_early, 
+			work_on_is_far, 
+			work_off_is_far,
+			work_on_far_reason, 
+			work_off_far_reason, 
+			work_on_punch_location, 
+			work_off_punch_location 
+		from 
+			t_punch 
+		where 
+			1=1
+			and user_id = #{userKey} 
+			and punch_year = #{punchYear} 
+			and punch_month = #{punchMonth}
+			<if test='punchDate !=null and punchDate !=""  '>
+			and punch_date=#{punchDate}
+			</if>
+			order by punch_date
+	</select>
+	
+	<select id="getMessage" parameterType="com.allook.mobile.bean.PunchBean">
+		
+	</select>
+</mapper>

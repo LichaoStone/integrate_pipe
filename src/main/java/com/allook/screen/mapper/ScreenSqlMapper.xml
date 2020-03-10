@@ -1,0 +1,1181 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.allook.screen.mapper.ScreenSqlMapper">
+	<resultMap type="com.allook.screen.bean.ScreenBean"   	id="resultScreen">
+		<result property="screenShowModelKey" 									column="screen_show_model_key"/>
+		<result property="screenShowSettingKey" 								column="screen_show_setting_key"/>
+		<result property="screenName" 											column="screen_name"/>
+		<result property="showCount" 											column="show_count"/>
+		<result property="highlightSecond" 										column="highlight_second"/>
+		<result property="showTypeName" 										column="show_type_name"/>
+		<result property="userDefinedKey" 										column="user_defined_key"/>
+		<result property="screenNum" 											column="screen_num"/>
+		<result property="showType" 											column="show_type"/>
+		<result property="timeType" 											column="time_type"/>
+	 </resultMap>
+  
+     <!-- 查询大屏设置 -->
+     <select id="getScreenSetting" parameterType="com.allook.screen.bean.ScreenBean" resultMap="resultScreen">
+     	 SELECT
+		    a.screen_show_model_key,
+		    a.screen_num,
+		    a.screen_name,
+		    a.show_type,
+		    a.show_type_name,
+		    a.user_defined_key,
+		    b.screen_show_setting_key,
+		    case when b.show_count is null then 10 else b.show_count end show_count,
+		    case when b.highlight_second is null then 0 else b.highlight_second end highlight_second ,
+		    b.time_type
+		FROM
+		    t_screen_show_model a
+		LEFT JOIN
+		    t_screen_show_setting b
+		ON
+		    a.show_type_name=b.show_type_name
+		<where>
+		    <if test="screenNum != null and screenNum !='' and screenNum !='null' ">
+		    	AND a.screen_num=#{screenNum}
+		    </if>
+		 	<if test="showTypeName != null and showTypeName !='' and showTypeName !='null' ">
+		 		AND a.show_type_name=#{showTypeName}
+		 	</if>
+		 </where>
+     </select>
+     
+     <!-- 网络热搜 -->
+     <select id="getHotSearch"   resultType="map">
+           select 
+           	   hot_search_key hotSearchKey,
+          	   hot_search_content hotSearchContent,
+          	   hot_degree hotDegree,
+          	   source,
+          	   show_status,
+          	   date_format(create_time,'%Y-%m-%d %H') createTime
+           from 
+           	   t_hot_search
+           where
+           	  show_status=1
+           order by date_format(create_time,'%Y-%m-%d %H') desc,hot_degree desc
+     </select>
+     
+     
+	 <select id="getLocalOpinion"  parameterType="java.util.Map" resultType="map">
+           select 
+           	   local_opinion_key localOpinionKey,
+          	   comments_content commentsContent,
+          	   nick_name nickName,
+          	   date_format(create_time,'%Y-%m-%d %H:%i:%s') createTime,
+          	   CASE
+          	   	    WHEN head_img_url is null or head_img_url='' then ''
+			        WHEN head_img_url REGEXP '^[0-9]*[1-9][0-9]*$' THEN CONCAT('${userHeadIconLocalIp}','/user_head_',head_img_url,'.png')
+			        ELSE CONCAT('${userHeadIconQingkIp}',head_img_url)  
+		       END headImgUrl
+           from
+           	   t_local_opinion
+           where
+           	   1=1
+           	   and show_status=1
+           order by order_num asc,create_time desc
+     </select>
+
+	 <!-- 本地新闻或全网实时热点 -->
+	 <select id="getLocalNews"  parameterType="java.util.Map" resultType="map">
+           select
+           	   hotspot_news_clue_key hotspotNewsClueKey,
+          	   hotspot_news_clue_title hotspotNewsClueTitle,
+          	   hotspot_news_clue_descript hotspotNewsClueDescript,
+          	   source,
+          	   date_format(create_time,'%Y-%m-%d %H:%i:%s') createTime,
+          	   CASE
+			        WHEN thum_img IS NULL or thum_img =''
+			        THEN ''
+			        ELSE CONCAT('${imgDomain}',thum_img)
+			   END thumImg
+          	from
+          		t_hotspot_news_clue
+          	where
+          		1=1
+          		and type=#{type}
+          		and show_status=1
+            order by order_num asc,create_time desc
+      </select>
+
+
+	 <!-- 生产力统计 -->
+	 <select id="getProductivityStatistics"  parameterType="java.util.Map" resultType="map">
+            SELECT
+			    case when a.count is null then 0 else a.count end count,
+			    b.qk_account_name,
+			    case when a.pv_count is null then 0 else a.pv_count end pv_count,
+			    case when a.uv_count is null then 0 else a.uv_count end uv_count,
+			    CASE
+          	   	    WHEN c.head_img_url is null or c.head_img_url='' then ''
+			        WHEN c.head_img_url REGEXP '^[0-9]*[1-9][0-9]*$' THEN CONCAT('${userHeadIconLocalIp}','/user_head_',c.head_img_url,'.png')
+			        ELSE CONCAT('${userHeadIconQingkIp}',head_img_url)  
+		       END headImgUrl
+			FROM
+				t_qk_children_account b
+				LEFT JOIN
+			    (
+			        SELECT
+			            qk_account_key,
+			            SUM(COUNT) count,
+			            SUM(pv_count) pv_count,
+			            SUM(uv_count) uv_count
+			        FROM
+			            t_productivity_statistics
+			        WHERE
+			            1=1
+			            and statistics_time between #{beginDate} and #{endDate}
+			        GROUP BY
+			            qk_account_key ) a
+			ON
+			    a.qk_account_key=b.qk_account_key
+			left join 
+				t_user c
+		    on 	
+		    	b.qk_account_key=c.qk_account_key
+			WHERE
+			    1=1
+			AND b.product_statistics_show_status=1
+			ORDER BY
+			    b.product_statistics_order_num ASC,
+			    b.update_time desc,
+			    a.count DESC
+     </select>
+
+	 
+	 <resultMap type="com.allook.clouds.bean.EffectStatisticsBean"   	id="resultEffectStatistics">
+		<result property="effectStatisticsKey" 							column="effect_statistics_key"/>
+		<result property="pvCount" 										column="pv_count"/>
+		<result property="uvCount" 										column="uv_count"/>
+		<result property="statisticsTime" 								column="statistics_time"/>
+		<result property="createTime" 									column="create_time"/>
+		<result property="creator" 										column="creator"/>
+	 </resultMap>
+	 <select id="getEffectStatistics"  parameterType="com.allook.clouds.bean.EffectStatisticsBean" resultMap="resultEffectStatistics">
+           select
+           	   effect_statistics_key,
+          	   pv_count,
+          	   uv_count,
+          	   date_format(statistics_time,'%Y-%m-%d %H:%i:%s') statistics_time,
+          	   date_format(create_time,'%Y-%m-%d %H:%i:%s') create_time,
+          	   creator
+           from
+          	   t_effect_statistics
+           order by statistics_time desc
+     </select>
+
+     <!-- 资讯热榜 -->
+	 <select id="getInformationHot"  parameterType="java.util.Map" resultType="map">
+           select
+           		a.information_hot_key informationHotKey,
+          	    date_format(a.synchronization_time,'%Y-%m-%d %H:%i:%s') synchronizationTime,
+          	    a.information_title informationTitle,
+          	    b.qk_account_name creator,
+          	    a.pv_count pvCount,
+          	    a.show_status showStatus,
+          	    date_format(a.create_time,'%Y-%m-%d %H:%i:%s') createTime,
+          	    CASE
+			        WHEN a.thum_img IS NULL or a.thum_img =''
+			        THEN ''
+			        ELSE CONCAT('${imgDomain}',a.thum_img)
+			    END thumImg  
+           from
+           	    t_information_hot a
+           	    left join
+           	    t_qk_children_account b
+           	    on a.creator=b.qk_account_key
+           where
+          		1=1
+          		and a.show_status=1
+           order by date_format(a.synchronization_time,'%Y-%m-%d') desc,a.pv_count desc
+     </select>
+
+
+     <!-- 视频热榜 -->
+	 <select id="getVideoHot"  parameterType="java.util.Map" resultType="map">
+           select
+           	    video_hot_key videoHotKey,
+          	    date_format(synchronization_time,'%Y-%m-%d %H:%i:%s') synchronizationTime,
+          	    information_title informationTitle,
+          	    creator,
+          	    play_count playCount,
+          	    source,
+          	    show_status showStatus,
+          	    date_format(create_time,'%Y-%m-%d %H:%i:%s') create_time,
+          	    CASE
+			        WHEN thum_img IS NULL or thum_img =''
+			        THEN ''
+			        ELSE CONCAT('${imgDomain}',thum_img)
+			    END thumImg,
+			    video_url SDUrl
+          	from
+          		t_video_hot
+          	where
+          		1=1
+          		and show_status=1
+            order by date_format(synchronization_time,'%Y-%m-%d') desc,play_count desc
+      </select>
+     
+      
+     
+     
+     <select id="getSelectedTopic" parameterType="java.util.Map" resultType="map">
+     		SELECT
+			    a.selected_topic_key selectedTopicKey,
+			    a.selected_topic_titile selectedTopicTitle,
+			    a.selected_topic_descript selectedTopicDescript,
+			    a.topic_status topicStatus,
+			    b.department_name departmentName
+			FROM
+			    t_selected_topic a
+			    left join t_department b
+			    on a.department_key=b.department_key
+			WHERE
+			    1=1
+			AND a.show_status=1
+			ORDER BY
+			    a.order_num ASC,
+			    a.create_time DESC
+     </select>
+     
+     
+     <resultMap type="com.allook.mobile.bean.DistributionTaskBean"   	id="resultDistributionTask">
+		<result property="distributionTaskKey" 									column="distribution_task_key"/>
+		<result property="userKey" 												column="user_key"/>
+		<result property="userTaskStatus" 										column="user_task_status"/>
+		<result property="showStatus" 											column="show_status"/>
+		<result property="createTime" 											column="create_time"/>
+		<result property="creator" 												column="creator"/>
+		<result property="isReturnContent" 										column="is_return_content"/>
+		<result property="realName" 											column="real_name"/>
+		<result property="lng" 													column="lng"/>
+		<result property="lat" 													column="lat"/>
+		<result property="headImgUrl" 											column="head_img_url"/>
+	 </resultMap>
+     <select id="getUserTask" parameterType="com.allook.mobile.bean.DistributionTaskBean" resultMap="resultDistributionTask">
+     		SELECT
+			    a.user_key,
+			    a.real_name,
+			    ${lng} AS lng,
+			    ${lat} AS lat,
+			    case when 
+           	    	a.head_img_url is null or a.head_img_url='' 
+           	    then '' 
+           	    else  CONCAT('${imgDomain}',a.head_img_url) 
+           	    end   head_img_url,
+			    case when a.show_status_wcdd is null or a.show_status_wcdd='' then  0 else a.show_status_wcdd end show_status
+			FROM
+			    t_user a
+			WHERE
+			    1=1
+			    and user_key=#{userKey}
+     </select>
+     
+     
+     <resultMap type="com.allook.local.bean.ChartSettingBean"   	id="resultChartSetting">
+		<result property="chartSettingKey" 									column="chart_setting_key"/>
+		<result property="chartSettingName" 								column="chart_setting_name"/>
+		<result property="chartSettingType" 								column="chart_setting_type"/>
+		<result property="longitudinalKey" 								    column="longitudinal_key"/>
+		<result property="longitudinalName" 								column="longitudinal_name"/>
+		<result property="longitudinalKey2" 								column="longitudinal_key2"/>
+		<result property="longitudinalName2" 								column="longitudinal_name2"/>
+		<result property="chartDataSettingKey" 								column="chart_data_setting_key"/>
+		<result property="chartDataSettingName" 							column="chart_data_setting_name"/>
+		<result property="chartDataSettingValue" 							column="chart_data_setting_value"/>
+		<result property="chartDataSettingKey2" 							column="chartData_setting_key2"/>
+		<result property="chartDataSettingValue2" 							column="chart_data_setting_value2"/>
+		<result property="showStatus" 										column="show_status"/>
+		<result property="createTime" 										column="create_time"/>
+		<result property="creator" 											column="creator"/>
+		<result property="orderNum" 									    column="order_num"/>
+		<result property="cloumnOrderNum" 									column="cloumnOrderNum"/>
+		<result property="axisNum" 									        column="axisNum"/>
+		<result property="columnName" 									    column="column_name"/>
+		<result property="columnNameKey" 									    column="column_name_key"/>
+	 </resultMap>
+     <select id="getChartSetting" parameterType="com.allook.local.bean.ChartSettingBean" resultMap="resultChartSetting">
+       	      select 
+       	      	  chart_setting_key,
+       	      	  chart_setting_name,
+       	      	  chart_setting_type,
+       	      	  creator,
+       	      	  show_status,
+       	      	  create_time
+       	      from
+       	      	  t_chart_setting
+       	      where
+       	      	 1=1
+       	      	 and show_status=1
+       	      	 and chart_setting_key=#{chartSettingKey}
+     </select>
+     
+     <!-- 饼状图数据 -->
+     <select id="getChartCakeDataSetting" parameterType="com.allook.local.bean.ChartSettingBean" resultMap="resultChartSetting">
+            SELECT
+			    a.chart_data_setting_key,
+			    a.chart_data_setting_name,
+			    a.chart_data_setting_value,
+			    a.order_num
+			FROM
+			    t_chart_data_setting a,
+			    t_chart_setting b
+			WHERE
+			    1=1
+			    and a.chart_setting_key=b.chart_setting_key
+			    and a.chart_setting_key=#{chartSettingKey}
+				and b.show_status=1
+				and b.chart_setting_type=0
+				ORDER BY
+				    a.order_num ASC
+     </select>
+     
+     
+     <!-- 折线图和柱状图数据 -->
+     <select id="getChartDataSetting"  parameterType="com.allook.local.bean.ChartSettingBean" resultMap="resultChartSetting">
+           SELECT
+			    a.*,
+			    b.column_name,
+			    b.order_num as cloumnOrderNum
+			FROM
+			    (
+			        SELECT
+			            chart_data_setting_name,
+			            chart_data_setting_value,
+			            order_num as axisNum,
+			            column_name_key,
+			            longitudinal_key
+			        FROM
+			            t_chart_data_setting
+			        WHERE
+			            chart_setting_key=#{chartSettingKey}
+			        AND show_status=1 ) a
+			LEFT JOIN
+			    t_chart_column_name b
+			ON
+			    a.column_name_key=b.column_name_key
+			WHERE
+			    b.show_status=1
+			ORDER BY
+			    b.order_num ASC,
+			    a.axisNum asc
+     </select>
+     
+     
+     <resultMap type="com.allook.local.bean.DictionariesBean"   	id="resultDictionaries">
+		<result property="dictionariesKey" 									column="dictionaries_key"/>
+		<result property="dictionariesName" 								column="dictionaries_name"/>
+		<result property="dictionariesValue" 								column="dictionaries_value"/>
+	 	<result property="createTime" 										column="create_time"/>
+		<result property="creator" 											column="creator"/>
+	 </resultMap>
+     <select id="getDictValuesByNames" parameterType="com.allook.local.bean.DictionariesBean" resultMap="resultDictionaries">
+     		select 
+     			dictionaries_key,
+     			dictionaries_name,
+     			dictionaries_value,
+     			date_format(create_time,'%Y-%m-%d %H:%i:%s') create_time,
+     			creator
+     		from
+     			t_dictionaries
+     		where
+     			dictionaries_name in (${dictionariesName})
+     </select>
+     
+     <select id="getDictValuesByName"  parameterType="java.lang.String" resultType="String">
+     	   select 
+     			dictionaries_value
+     		from
+     			t_dictionaries
+     		where
+     			dictionaries_name=#{value}
+     </select>
+     
+     <!-- 任务统计 -->
+     <select id="getTaskStatistics" parameterType="java.util.Map"  resultType="map">
+     		SELECT
+			    case when  aaa.taskTotalCount is null then 0 else aaa.taskTotalCount end taskTotalCount,
+			    case when  aaa.taskDoneCount is null then 0 else aaa.taskDoneCount end taskDoneCount,
+			    case when  aaa.taskDoneCount/aaa.taskTotalCount is null then 0.0000 else aaa.taskDoneCount/aaa.taskTotalCount end taskDoneRate,
+			    ccc.user_key userKey,
+			    ccc.real_name realName
+			FROM
+			    t_user ccc
+			LEFT JOIN
+			    (
+			        SELECT
+			            CASE
+			                WHEN aa.taskTotalCount IS NULL
+			                THEN 0
+			                ELSE aa.taskTotalCount
+			            END taskTotalCount,
+			            CASE
+			                WHEN bb.taskDoneCount IS NULL
+			                THEN 0
+			                ELSE bb.taskDoneCount
+			            END taskDoneCount,
+			            aa.user_key
+			        FROM
+			            (
+			                SELECT
+			                    a.*
+			                FROM
+			                    (
+			                        SELECT
+			                            user_key
+			                        FROM
+			                            t_user
+			                        WHERE
+			                            1=1
+			                        AND status=1
+			                        and  user_type=0
+			                        AND task_statistics_show_status=1 ) b
+			                LEFT JOIN
+			                    (
+			                        SELECT
+			                            COUNT(*) AS taskTotalCount,
+			                            user_key
+			                        FROM
+			                            t_user_task_relationship
+			                        where
+			                           1=1
+			                        and create_time between #{beginDate} and #{endDate}
+			                        GROUP BY
+			                            user_key ) a
+			                ON
+			                    a.user_key=b.user_key ) aa
+			        LEFT JOIN
+			            (
+			                SELECT
+			                    a.*
+			                FROM
+			                    (
+			                        SELECT
+			                            user_key
+			                        FROM
+			                            t_user
+			                        WHERE
+			                            1=1
+			                        AND status=1
+			                        and  user_type=0
+			                        AND task_statistics_show_status=1 ) b
+			                LEFT JOIN
+			                    (
+			                        SELECT
+			                            COUNT(*) AS taskDoneCount,
+			                            user_key
+			                        FROM
+			                            t_user_task_relationship
+			                        WHERE
+			                            user_task_status=1
+			                            and create_time between #{beginDate} and #{endDate}
+			                        GROUP BY
+			                            user_key ) a
+			                ON
+			                    a.user_key=b.user_key ) bb
+			        ON
+			            aa.user_key=bb.user_key ) aaa
+			ON
+			    aaa.user_key=ccc.user_key
+			WHERE
+			    1=1
+			AND ccc.user_type=0
+			AND ccc.status=1
+			AND ccc.task_statistics_show_status=1
+			ORDER BY
+			    ccc.task_order_num ASC
+     </select>
+     
+     <!-- 自定义列表 -->
+     <resultMap type="com.allook.local.bean.ListSettingBean"   	id="resultListSetting">
+		<result property="listSettingKey" 										column="list_setting_key"/>
+		<result property="listSettingName" 										column="list_setting_name"/>
+		<result property="listSettingType" 										column="list_setting_type"/>
+		<result property="showStatus" 											column="show_status"/>
+		<result property="listRowSettingKey" 									column="list_row_setting_key"/>
+		<result property="listRowSettingValue" 									column="list_row_setting_value"/>
+		<result property="listColumnSettingKey" 								column="list_column_setting_key"/>
+		<result property="listColumnSettingName" 								column="list_column_setting_name"/>
+		<result property="orderNum" 								            column="order_num"/>
+	 </resultMap>
+	 
+	 <select id="getListSetting" parameterType="com.allook.local.bean.ListSettingBean"  resultMap="resultListSetting">
+          	SELECT
+			    a.list_setting_key,
+			    a.list_setting_name,
+			    a.list_setting_type,
+			    a.show_status
+			FROM
+			    t_list_setting a
+			where
+				1=1
+			and a.list_setting_key=#{listSettingKey}
+     </select>
+	 
+	 
+     <select id="getListColumnSetting" parameterType="com.allook.local.bean.ListSettingBean"  resultMap="resultListSetting">
+          	SELECT
+			    a.list_setting_key,
+			    a.list_setting_name,
+			    a.list_setting_type,
+			    b.list_column_setting_name,
+			    b.list_column_setting_key
+			FROM
+			    t_list_setting a
+			    left join
+			    t_list_column_setting b
+			    on  a.list_setting_key=b.list_setting_key
+			WHERE
+			   1=1
+			AND a.show_status=1
+			and a.list_setting_key=#{listSettingKey}
+			order by b.order_num asc
+     </select>
+     
+     <select id="getListRowSetting" parameterType="com.allook.local.bean.ListSettingBean"  resultMap="resultListSetting">
+          	SELECT
+			    list_row_setting_key,
+			    list_row_setting_value,
+			    list_setting_key,
+			    list_column_setting_key
+			FROM
+			    t_list_row_setting
+			WHERE
+				1=1
+			AND list_setting_key=#{listSettingKey}
+			<if test="countNum != null and countNum != '' ">
+				and order_num=#{countNum}
+			</if>
+			order by order_num asc
+     </select>
+     
+     
+     <select id="getListRowSize" parameterType="com.allook.local.bean.ListSettingBean"  resultMap="resultListSetting">
+     	   select 
+     	   		list_row_setting_key 
+     	   	from 
+     	   		t_list_row_setting  
+     	   	where 
+     	   		list_setting_key=#{listSettingKey}
+     </select>
+     
+      <select id="getSumCallTime" parameterType="com.allook.screen.bean.ScreenBean" resultType="int">
+     		SELECT
+			    CASE
+			        WHEN SUM(initiative_duration) IS NULL
+			        THEN 0
+			        ELSE SUM(initiative_duration)
+			    END
+			FROM
+			    t_conversation_record
+			WHERE
+			    1=1
+     </select>
+     
+     <!-- 获取传习中心数据 -->
+     <select id="getCenterList"  parameterType="java.util.Map" resultType="map">
+     		select 
+     			center_key hotspotNewsClueKey,
+     			center_title hotspotNewsClueTitle,
+     			CASE
+			        WHEN thum_img IS NULL or thum_img =''
+			        THEN ''
+			        ELSE CONCAT('${imgDomain}',thum_img)
+			   	END thumImg,
+     			center_descript hotspotNewsClueDescript,
+     			source,
+     			date_format(create_time,'%Y-%m-%d %H:%i') createTime  
+     		from
+     			t_chairman_center
+     		where
+     			1=1
+     			and show_status=1
+     			order by order_num asc,create_time desc
+     </select>
+     
+     
+     
+     
+     <!-- 融媒 2.0 -->
+     <!-- 地方舆论详情 -->
+     <select id="getDetailDFYL"  parameterType="com.allook.frame.BaseEntity" resultType="map">
+     	  select 
+           	   local_opinion_key localOpinionKey,
+          	   comments_content commentsContent,
+          	   nick_name nickName,
+          	   date_format(create_time,'%Y-%m-%d %H:%i:%s') createTime,
+          	   CASE
+          	   	    WHEN head_img_url is null or head_img_url='' then ''
+			        WHEN head_img_url REGEXP '^[0-9]*[1-9][0-9]*$' THEN CONCAT('${userHeadIconLocalIp}','/user_head_',head_img_url,'.png')
+			        ELSE CONCAT('${userHeadIconQingkIp}',head_img_url)  
+		       END headImgUrl,
+		       program_name title,
+		       source
+           from
+           	   t_local_opinion
+           where
+           	   1=1
+           	   and local_opinion_key=#{key}
+           order by order_num asc,create_time desc
+     </select>
+     
+     <!-- 获取图片附件列表 -->
+     <select id="getImgeList"  parameterType="java.lang.String" resultType="map">
+     	  select 
+     	  	  file_url commentImgUrl
+     	  from
+     	  	  t_file
+     	  where
+     	      program_key=#{value}
+     	  order by order_num asc
+      </select>
+     
+     
+     <!-- 全网热点详情 -->
+     <select id="getDetailQWRD"  parameterType="java.lang.String" resultType="map">
+     		SELECT
+			    hotspot_news_clue_title hotspotNewsClueTitle,
+			    source,
+			    date_format(create_time,'%Y-%m-%d %H:%i:%s') createTime,
+			    hotspot_news_clue_descript hotspotNewsClueDescript,
+			    html_url,
+			    thum_img thumImg
+			FROM
+			    t_hotspot_news_clue
+			WHERE
+			    hotspot_news_clue_key=#{value}
+     </select>
+     
+     
+     <!-- 本地新闻 -->
+     <select id="getDetailBDXW"  parameterType="java.lang.String" resultType="map">
+     		SELECT
+			    hotspot_news_clue_title hotspotNewsClueTitle,
+			    source,
+			    date_format(create_time,'%Y-%m-%d %H:%i:%s') createTime,
+			    hotspot_news_clue_descript hotspotNewsClueDescript,
+			    html_url,
+			    thum_img thumImg
+			FROM
+			    t_hotspot_news_clue
+			WHERE
+			    hotspot_news_clue_key=#{value}
+     </select>
+     
+      <!-- 资讯热榜 -->
+      <select id="getDetailZXRB"  parameterType="java.lang.String" resultType="map">
+     		SELECT
+			    information_title informationTitle,
+			    html_url          informationContent,
+			    date_format(create_time,'%Y-%m-%d %H:%i:%s') createTime,
+			    pv_count          pvCount
+			FROM
+			    t_information_hot
+			WHERE
+			    information_hot_key=#{value}
+     </select>
+     
+     
+      <!-- 新闻选题 -->
+      <select id="getDetailXWXT"  parameterType="java.lang.String" resultType="map">
+     		SELECT
+			    c.*,
+			    d.distribution_task_title taskName,
+			    e.user_task_status taskStatus,
+			    f.real_name reporter
+			FROM
+			    (
+			        SELECT
+			            a.selected_topic_key      selectedTopicKey,
+			            a.selected_topic_titile   selectedTopicTitle,
+			            a.selected_topic_descript selectedTopicDescript,
+			            a.topic_status            topicStatus,
+			            b.department_name         departmentName,
+			            a.selected_topic_remarks  remark,
+			            a.total_task  taskTotalCount
+			         FROM
+			            t_selected_topic a
+			        LEFT JOIN
+			            t_department b
+			        ON
+			            a.department_key=b.department_key
+			        WHERE
+			            a.selected_topic_key=#{value} ) c
+			LEFT JOIN
+			    t_distribution_task d
+			ON
+			    c.selectedTopicKey=d.selected_topic_key
+			LEFT JOIN
+			    t_user_task_relationship e
+			ON
+			    d.distribution_task_key=e.distribution_task_key
+			LEFT JOIN
+			    t_user f
+			ON
+			    e.user_key=f.user_key
+     </select>
+     
+     
+      <!-- 传习中心 -->
+      <select id="getDetailCXZX"  parameterType="java.lang.String" resultType="map">
+     		SELECT
+			    center_title hotspotNewsClueTitle,   
+			    source,
+			    date_format(create_time,'%Y-%m-%d %H:%i:%s') createTime,
+			    html_url    hotspotNewsClueDescript
+			FROM
+			    t_chairman_center
+			where
+			    center_key=#{value}
+      </select>
+      
+      
+      <!-- 公众账号 -->
+      <select id="wechatAccount" parameterType="com.allook.screen.bean.ScreenBean" resultType="map">
+      	  select 
+      	   		third_key wechatKey,
+      	   		name wechatTitle,
+      	   		logo wechatIcon,
+      	   		date_format(create_time,'%Y-%m-%d')  bindTime 
+      	   	from 
+      	   		t_third_authorization 
+      	   	where 
+      	   		1=1
+      	   		and  type=1
+      	   		and  is_show_account=0
+      	   	    order by create_time asc
+      </select>
+      
+      <!-- 发布次数 -->
+      <select id="publishCount" parameterType="com.allook.screen.bean.ScreenBean" resultType="map">
+			    SELECT
+				    c.wechatKey,
+				    c.wechatTitle,
+				    c.wechatIcon,
+				    COUNT(c.wechatKey) publishCount
+				FROM
+				    (
+				        SELECT
+				            a.third_key wechatKey,
+				            a.name      wechatTitle,
+				            a.logo      wechatIcon,
+				            a.ordernum_publish,
+            				a.create_time
+				        FROM
+				            t_third_authorization a,
+				            t_news_publish_logs b
+				        WHERE
+				            1=1
+				        AND a.third_key=b.third_key
+				        AND a.type=1
+				        and a.is_show_publish=0
+				        AND b.status=1
+				        and b.publish_time between #{beginDate} and #{endDate} 
+				        GROUP BY
+				            b.group_key,
+				            a.third_key,
+				            a.name,
+				            a.logo,
+				         	a.ordernum_publish,
+                            a.create_time ) c
+				GROUP BY
+				    c.wechatKey,
+				    c.wechatTitle,
+				    c.wechatIcon
+				order by c.ordernum_publish asc,c.create_time desc
+      </select>
+      
+      
+       <!-- 发布稿件 -->
+      <select id="publishManu" parameterType="com.allook.screen.bean.ScreenBean" resultType="map">
+           select 
+      	  		a.third_key wechatKey,
+      	  		a.name wechatTitle,
+      	  		a.logo wechatIcon,
+      	  		COUNT(a.third_key) publishCount 
+      	  from 
+      	  		t_third_authorization a,
+      	  		t_news_publish_logs b 
+      	  where 
+      	  		1=1
+      	  		and a.third_key=b.third_key 
+      	  		and a.type=1
+      	  		and a.is_show_news=0
+      	  		and b.status=1
+      	  		<if test="beginDate != null and beginDate !='' and beginDate !='null' ">
+      	  			and b.publish_time between #{beginDate} and #{endDate}  
+      	  		</if>
+      	  		group by a.third_key,a.name,a.logo
+      	  		order by a.ordernum_news asc,a.create_time desc
+      </select>
+      
+      
+      <!-- 发布稿件     websocket使用-->
+      <select id="publishManuWXJZ" parameterType="com.allook.screen.bean.ScreenBean" resultType="map">
+           select 
+      	  		b.publish_key manuscriptKey,
+      	  		b.title manuscriptTitle,
+      	  		date_format(b.publish_time,'%Y-%m-%d')  publishTime,
+      	  		a.name publicAccountName   
+      	  from 
+      	  		t_third_authorization a,
+      	  		t_news_publish_logs b 
+      	  where 
+      	  		1=1
+      	  		and a.third_key=b.third_key 
+      	  		and a.type=1
+      	  		and b.is_hidden='0'
+      	  		and b.status=1
+      	        order by  b.publish_time desc,b.order_num desc
+      </select>
+      
+      
+       <!-- 审核稿件-->
+      <select id="examineManu" parameterType="com.allook.screen.bean.ScreenBean" resultType="map">
+            select 
+			        a.third_key wechatKey,
+			        a.name wechatTitle,
+			        a.logo wechatIcon,
+			        COUNT(a.third_key) publishCount 
+			from 
+			        t_third_authorization a,
+			        t_news_check_wechat b 
+			where 
+			        1=1
+			        and a.third_key=b.third_key 
+			        and a.type=1
+			        and a.is_show_check=0
+			        and b.status in ('1','2','3','4')
+			        and b.create_time between #{beginDate} and #{endDate}  
+			        group by a.third_key,a.name,a.logo
+			        order by a.ordernum_check asc,a.create_time desc
+      </select>
+      
+      <!-- 发布量总量 -->
+      <select id="publishTotalCount" parameterType="java.lang.String" resultType="int">
+      		 select 
+      		 	count(*) 
+      		 from 
+      		 	(
+      		 		select 
+      		 			count(publish_key) 
+      		 		from 
+      		 			t_third_authorization a,
+      		 			t_news_publish_logs b
+      		 		where
+      		 		    1=1
+      		 		    and  a.third_key=b.third_key
+      		 			and  a.type=1
+      		 			and  b.status=1 
+      		 			group by group_key 
+      		 	) c
+      </select>
+      
+      <!-- 微信公众号总量 -->
+      <select id="wechatTotalCount" parameterType="java.lang.String" resultType="int">
+      	     select 
+      	     	 count(*) 
+      	     from 
+      	     	 t_third_authorization 
+      	     where 
+      	         1=1
+      	         and type=1 
+      	         and is_show_account=0
+      </select>
+      
+      <!-- 发布稿件总量 -->
+      <select id="publishManuTotalCount" parameterType="java.lang.String" resultType="int">
+      	  select 
+      	  		count(*) 
+      	  from 
+      	  		t_third_authorization a,
+      	  		t_news_publish_logs b
+      	  where 
+      	  	  1=1
+      	  	  and a.third_key=b.third_key
+      	  	  and a.type=1
+      		  and b.status=1 
+      </select>
+      
+      <!-- 审核稿件总量 -->
+      <select id="examineManuTotalCount" parameterType="java.lang.String" resultType="int">
+      	    select 
+      	    	count(*) 
+      	    from 
+      	    	t_third_authorization a,
+      	    	t_news_check_wechat b 
+      	    where 
+      	    	1=1
+      	    	and a.third_key=b.third_key  
+      	    	and a.type=1 
+      	    	and b.status in ('1','2','3','4')
+      </select>
+      
+      
+      <!-- V3.0 获取爆料详情页数据 -->
+      <select id="getDetailBLGL" parameterType="java.lang.String" resultType="map" >
+      		select
+      			report_id as reportKey,
+      			report_title as reportTitle,
+      			date_format(publish_time,'%Y-%m-%d %H:%i:%s') publish_time,
+      			status,
+      			content,
+      			reply as replyContent,
+      			date_format(create_time,'%Y-%m-%d %H:%i:%s') createTime,
+      			login_name as customerName
+      		from
+      			t_report
+      		where
+      			1=1
+      			and report_id=#{value}
+      </select>
+      
+      
+      <select id="getFileByKey" parameterType="com.allook.screen.bean.ScreenBean" resultType="map">
+      	  select 
+      	  	 CONCAT('${imgDomain}',file_url)  as fileUrl
+      	  from 
+      	  	 t_file
+      	  where
+      	  	1=1
+      	  	and program_key=#{key}
+      	  	order by order_num asc
+      </select>
+      
+      
+      <!-- 获取通讯联动详情数据 -->
+       <select id="getDetailTXLD" parameterType="java.lang.String" resultType="map" >
+       		select
+       			a.manu_id,
+       			a.sub_id,
+       			a.manu_title as hotspotNewsClueTitle,
+       			a.manu_content as hotspotNewsClueDescript,
+       			a.manu_img_url as thumImg,
+       			date_format(a.manu_create_time,'%Y-%m-%d %H:%i:%s') createTime,
+       			a.manu_user_id,
+       			a.manu_state,
+       			a.manu_usage,
+       			b.sub_title as source
+       		from
+       			t_manuscript a,
+       			t_subject b
+       		where
+       			1=1
+       			and a.sub_id=b.sub_id
+       			and a.manu_id=#{value}
+       </select>
+      
+      
+      <!-- v3.0 获取考勤列表数据  -->
+      <select id="getKaoQinList" parameterType="com.allook.mobile.bean.PunchBean" resultType="map">
+      		select
+      			a.user_id as userKey,
+      			case when 
+           	    	b.head_img_url is null or b.head_img_url='' 
+           	    then '' 
+           	    else  CONCAT('${imgDomain}',b.head_img_url) 
+           	    end   userIcon,
+      			b.real_name as userName,
+      			a.work_on_time as startTime,
+      			a.is_late as isLate,
+      			a.work_off_time as endTime,
+      			a.is_early as isEarly,
+      			'false' as checkFlag,
+      			a.work_on_is_far as workOnIsFar,
+      			a.work_off_is_far  as workOffIsFar
+      		from 
+      			t_punch a,
+      			t_user b
+      		where
+      			1=1
+      			and a.user_id=b.user_key
+      			and a.punch_date=#{punchDate}
+      			order by a.work_on_time asc
+      </select>
+      
+      <!-- v3.0 爆料管理首页-爆料列表数据 -->
+      <select id="getReportList" parameterType="com.allook.mobile.bean.PunchBean" resultType="map">
+		        select 
+		        	report_id as reportKey,
+		        	report_title as reportTitle,
+		        	date_format(publish_time,'%Y-%m-%d') as createTime,
+		        	status as status,
+		        	b.report_type_name reportClassifyName
+		        from 
+		        	t_report a,
+		        	t_report_type b
+		        where
+		        	1=1
+		        	and a.type_id=b.report_type_id
+		        	and a.show_status=1
+		        	order by a.order_num asc,a.create_time desc
+      </select>
+      
+      
+      <!-- V3.0 爆料管理首页-类型排行 -->
+      <select id="getClassifyTypeList" parameterType="com.allook.mobile.bean.PunchBean" resultType="map">
+      		select 
+      			f.report_type_name,
+      			case when e.totalProblem is null then 0 else e.totalProblem end totalProblem,
+      			case when e.finishProblem is null then 0 else e.finishProblem end finishProblem,
+      			case when e.finishProblem/e.totalProblem is null then '0%' else CONCAT(ROUND(e.finishProblem/e.totalProblem*100),'%') end reversionRate,
+      			e.type_id  
+      		from 
+      			( 
+      				select 
+      					b.type_id,
+      					b.totalProblem,
+      					d.finishProblem 
+      				from 
+      					(
+      						SELECT 
+      							COUNT(a.report_id) AS totalProblem, 
+      							a.type_id
+							FROM 
+								t_report a
+							GROUP BY a.type_id 
+						) b 
+						
+						left join 
+						
+						(
+							SELECT 
+								COUNT(c.report_id) AS finishProblem, 
+								c.type_id
+							FROM 
+								t_report c 
+							where 
+								c.status=2
+							GROUP BY 
+								c.type_id 
+						) d 
+						on b.type_id=d.type_id
+				 ) e 
+				 
+				 left join t_report_type f 
+				 on e.type_id=f.report_type_id
+				 order by totalProblem desc,reversionRate desc,report_type_name asc
+	  </select>
+      
+      <!-- 爆料管理首页-诉求总量和已处理诉求数量  -->
+      <select id="getReportStatistics" parameterType="com.allook.mobile.bean.PunchBean" resultType="map">
+      	 	select
+      	 		replace(substring_index(now(),' ',1),'-','.') as expiryDate, 
+      	 		MAX(case c.countType when 'totalProblem' then dataCount else 0 end) 'totalCount',
+      	 		MAX(case c.countType when 'finishProblem' then dataCount else 0 end) 'resolvedCount' 
+      	 	from 
+      	 		(
+      	 			select 
+      	 				count(*) as dataCount,
+      	 				'totalProblem' as countType  
+      	 			from 
+      	 				t_report  
+      	 			
+      	 			union all   
+      	 			
+      	 			select 
+      	 				count(*) as dataCount,
+      	 				'finishProblem' as countType 
+      	 			from 
+      	 				t_report 
+      	 			where 
+      	 				status=2
+      	 		) c
+      </select>
+      
+      
+      <!-- 
+      <resultMap type="com.allook.wechat.bean.SubjectBean"    id="resultSubjectMap">
+			<result property="subId" 											    column="sub_id"/>
+			<result property="subTitle" 											column="sub_title"/>
+			<result property="subCreateTime" 										column="sub_create_time"/>
+			<result property="subContent" 											column="sub_content"/>
+			<result property="subRemark" 											column="sub_remark"/>
+			<result property="subUserId" 											column="sub_user_id"/>
+			<result property="showStatus" 											column="show_status"/>
+			<collection  property="reportList"  column="class_id"  javaType="ArrayList" ofType="com.allook.wechat.bean.ReportBean" select="com.allook.screen.mapper.ScreenSqlMapper.getReportList">
+	  </resultMap>
+	   
+	  
+      <select id="getLDGLList" parameterType="com.allook.mobile.bean.PunchBean"   resultType="map">
+      	  select 
+      	  	  c.*,
+      	  	  d.real_name as reportor
+      	  from
+      	  	 (
+	      	  select 
+	      	  		a.sub_id as subjectKey,
+	      	  		a.sub_title as subjectTitle,
+	      	  		b.manu_id as reportKey,
+	      	  		b.manu_title as reportTitle,
+	      	  		b.manu_create_time as publishTime,
+	      	  		b.manu_user_id   
+	      	  from 
+	      	  	    t_subject a,
+	      	  	    t_manuscript b 
+	      	  where 
+	      	  	  1=1
+	      	  	  and a.sub_id=b.sub_id
+	      	 ) c
+	      	 left join 
+	      	 t_user d
+	      	 on c.manu_user_id=d.user_key
+      </select>
+      -->
+      
+      <select id="getLDGLList" parameterType="com.allook.screen.bean.ScreenBean"     resultType="map">
+      	   select 
+      	   		a.sub_id as subjectKey,
+      	   		a.sub_title as subjectTitle,
+      	   		'false' as checkFlag,
+      	   		count(b.sub_id) as manuscriptCount
+      	   from 
+      	   		t_subject a
+      	   		left join
+      	   		t_manuscript b 
+      	   		on a.sub_id=b.sub_id 
+      	   where 
+      	   		1=1
+      	   		and a.show_status=1
+      	   		and b.manu_state=1
+      	   		group by a.sub_id
+      	   		order by a.order_num asc,a.sub_create_time desc
+      </select>
+      
+      
+      <select id="getSubjectReportList"  parameterType="com.allook.screen.bean.ScreenBean"   resultType="map">
+      	  select 
+      	  	 c.reportKey,
+      	  	 c.reportTitle,
+      	  	 c.publishTime,
+      	  	 c.checkFlag,
+      	  	 d.real_name as reportor,
+      	  	 c.subjectKey
+      	  from 
+      	  (
+	      	  select 
+	      	  	 b.manu_id as reportKey,
+	      	  	 b.manu_title as reportTitle,
+	      	  	 date_format(b.manu_create_time,'%Y-%m-%d %H:%i:%s')  publishTime,
+	      	  	 b.manu_user_id,
+	      	  	 'false' as checkFlag,
+	      	  	 a.sub_id as subjectKey,
+	      	  	 a.order_num
+	      	  from
+	      	  	 t_subject a,
+	      	   	 t_manuscript b  
+	      	  where 
+	      	  	 1=1
+	      	  	 and a.sub_id=b.sub_id
+	      	  	 and b.manu_state=1
+	      	  	 and a.sub_id in (${key})
+      	  ) c
+      	  left join 
+      	  	t_user d
+      	  on c.manu_user_id=d.user_key
+      	  order by c.order_num asc,c.publishTime desc
+      </select>
+</mapper>

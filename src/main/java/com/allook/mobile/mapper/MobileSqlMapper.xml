@@ -1,0 +1,637 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.allook.mobile.mapper.MobileSqlMapper">
+    <resultMap type="com.allook.mobile.bean.MobileBean"   	id="resultMobile">
+		<result property="recordImg" 			column="recordImg"/>
+		<result property="recordName" 			column="recordName"/>
+		<result property="recordLength" 		column="recordLength"/>
+		<result property="recordTime" 			column="recordTime"/>
+		<result property="recordStatus" 		column="recordStatus"/>
+		<result property="recordDate" 			column="recordDate"/>
+		<result property="createTime" 			column="createTime"/>
+	</resultMap>
+    
+    
+    <resultMap type="com.allook.mobile.bean.UserBean"   	id="userInfo">
+    	<result property="userKey" 							column="user_key"/>
+		<result property="userName" 						column="user_name"/>
+		<result property="realName" 						column="real_name"/>
+		<result property="qkAccountNumber" 					column="qk_account_number"/>
+		<result property="qkAccountKey" 					column="qk_account_key"/>
+		<result property="password" 						column="password"/>
+		<result property="gender" 							column="gender"/>
+		<result property="headImgUrl" 						column="head_img_url"/>
+		<result property="phoneNumber" 						column="phone_number"/>
+		<result property="userType" 						column="user_type"/>
+		<result property="taskStatisticsShowStatus" 		column="task_statistics_show_status"/>
+		<result property="productStatisticsShowStatus" 		column="product_statistics_show_status"/>
+		<result property="status" 							column="status"/>
+		<result property="createTime" 						column="create_time"/>
+		<result property="creator" 							column="creator"/>
+		<result property="orderNum" 						column="order_num"/>
+		<result property="wyyxToken" 						column="wyyx_token"/>
+		
+	</resultMap>
+	
+	<!-- 外采任务详情 -->
+	<resultMap type="com.allook.mobile.bean.DistributionTaskBean"   	id="taskInfo">
+    	<result property="distributionTaskKey" 							column="distribution_task_key"/>
+		<result property="distributionTaskTitle" 						column="distribution_task_title"/>
+		<result property="address" 										column="address"/>
+		<result property="distributionTaskTime" 						column="distribution_task_time"/>
+		<result property="selectedTopicKey" 							column="selected_topic_key"/>
+		<result property="distributionTaskRemarks" 						column="distribution_task_remarks"/>
+		<result property="userKey" 										column="user_key"/>
+		<result property="userTaskStatus" 								column="user_task_status"/>
+		<result property="reason" 										column="reason"/>
+		<result property="createTime" 									column="create_time"/>
+		<result property="creator" 										column="creator"/>
+		<result property="orderNum" 									column="order_num"/>
+	</resultMap>
+	
+	<resultMap type="com.allook.mobile.bean.FileBean"   	id="fileInfo">
+    	<result property="userFileKey" 									column="user_file_key"/>
+		<result property="userFileName" 								column="user_file_name"/>
+		<result property="userKey" 										column="user_key"/>
+		<result property="userFolderKey" 								column="user_folder_key"/>
+		<result property="fileUrl" 										column="file_url"/>
+		<result property="showStatus" 									column="show_status"/>
+		<result property="createTime" 									column="create_time"/>
+		<result property="creator" 										column="creator"/>
+		<result property="orderNum" 									column="order_num"/>
+		<result property="imageUrl" 									column="image_url"/>
+		<result property="fileType" 									column="file_type"/>
+		<result property="distributionTaskKey" 							column="distribution_task_key"/>
+		<result property="remarks" 										column="remarks"/>
+		<result property="isDelete" 									column="is_delete"/>
+		<result property="size" 										column="size"/>
+		<result property="duration" 									column="duration"/>
+	</resultMap>
+	
+	
+	<resultMap type="com.allook.mobile.bean.UserCheckBean"   	id="userCheckInfo">
+    	<result property="userKey" 												column="user_key"/>
+    	<result property="userName" 											column="user_name"/>
+		<result property="assessmentKey" 										column="assessment_key"/>
+		<result property="qkAccountKey" 										column="qk_account_key"/>
+		<result property="newsCount" 											column="news_count"/>
+		<result property="pvCount" 												column="pv_count"/>
+		<result property="uvCount" 												column="uv_count"/>
+		<result property="perviews" 											column="perviews"/>
+		<result property="updateTime" 											column="update_time"/>
+	</resultMap>
+	
+	<resultMap type="com.allook.mobile.bean.DepartmentBean" id="departmentInfo">
+		<result property="departmentKey" column="department_key"/>
+		<result property="departmentName" column="department_name"/>
+	</resultMap>
+	
+	<resultMap type="com.allook.local.bean.DictionariesBean" id="resultDict">
+		<result property="dictionariesKey" column="dictionaries_key"/>
+		<result property="dictionariesName" column="dictionaries_name"/>
+		<result property="dictionariesValue" column="dictionaries_value"/>
+	</resultMap>
+	
+	<resultMap type="com.allook.mobile.bean.PunchBean" id="punchInfo">
+		<result property="punchYear" column="punch_year"/>
+		<result property="punchMonth" column="punchMonth"/>
+		<result property="punchDate" column="punch_date"/>
+		<result property="workOnTime" column="work_on_time"/>
+		<result property="workOffTime" column="work_off_time"/>
+		<result property="isLate" column="is_late"/>
+		<result property="isEarly" column="is_early"/>
+		<result property="workOnIsFar" column="work_on_is_far"/>
+		<result property="workOffIsFar" column="work_off_is_far"/>
+		<result property="workOnFarReason" column="work_on_far_reason"/>
+		<result property="workOffFarReason" column="work_off_far_reason"/>
+		<result property="workOnPunchLocation" column="work_on_punch_location"/>
+		<result property="workOffPunchLocation" column="work_off_punch_location"/>
+	</resultMap>
+	
+    <!-- 获取通话记录信息 -->
+    <select id="callRecords"  parameterType="com.allook.mobile.bean.MobileBean" resultMap="resultMobile">
+          select 
+           	    case when 
+           	    	a.head_img_url is null or a.head_img_url='' 
+           	    then '' 
+           	    else  CONCAT('${imgDomain}',a.head_img_url) 
+           	    end   recordImg,
+			    a.real_name                           recordName,
+			    tr.duration                           recordLength,
+			    tr.createtime                         createTime,
+			    date_format(tr.createtime,'%H:%i')    recordTime,
+			    date_format(tr.createtime,'%m/%d')    recordDate,
+			    case when tr.status is null or tr.status='' then 'HANGUP' else tr.status end recordStatus      	   
+           from
+			    t_user a   
+		 		left join 
+		 			t_conversation_record tr 
+		 			on a.user_key=tr.initiative_id
+			where
+				tr.passive_id=#{userKey}
+   		    order by  tr.createtime desc
+    </select>
+    
+    <!-- 获取未读外采任务 -->
+    <select id="homeNoRead" parameterType="com.allook.mobile.bean.MobileBean" resultType="int">
+    	  select count(t.`relationship_key`) from `t_user_task_relationship` t where `user_key` = #{userKey} and `status` = '0' and `user_task_status` != '3'
+    </select>
+    
+    <!-- 外采任务设置为已读 -->
+    <update id="externalTaskReadJob" parameterType="com.allook.mobile.bean.MobileBean">
+    	update t_user_task_relationship set status='1' where distribution_task_key=#{distributionTaskKey} and user_key=#{userKey}
+    </update>
+    
+    <!-- 获取用户详细信息 -->
+    <select id="homeUserDetailInfo" parameterType="com.allook.mobile.bean.UserBean" resultMap="userInfo">
+    	 select 
+    	 	user_key,
+			user_name,
+			real_name,
+			qk_account_number,                              
+			qk_account_key,
+			password,
+			gender,
+			case when head_img_url is null or head_img_url='' then '' else CONCAT('${imgDomain}',head_img_url) end head_img_url,
+			phone_number,
+			case when qk_account_key is null or qk_account_key='' 
+			then '1'
+			else '0'
+			end as user_type,
+			case when status is null or status='' then 0 else status end status,
+			task_statistics_show_status,
+			create_time,
+			creator,
+			order_num,
+			wyyx_token
+		from 
+			t_user
+		where
+			1=1
+			and qk_account_key=#{qkAccountKey}
+    </select>
+    
+    <!-- 更新用户云信密码 -->
+    <update id="updateUserInfo" parameterType="com.allook.mobile.bean.UserBean">
+		update `t_user` set `wyyx_token`= #{wyyxToken}
+	    where
+		user_key=#{userKey}
+	</update>
+    
+    <!-- 修改外采任务状态 -->
+    <update id="externalTaskModify" parameterType="com.allook.mobile.bean.DistributionTaskBean" >
+    	update 
+    		 t_user_task_relationship
+        set 
+        	user_task_status=#{userTaskStatus},
+        	reason=#{reason}
+        	<if test='revokeTime !=null and revokeTime !=""  '>
+        	,revoke_time=#{revokeTime}
+        	</if>
+        where
+            1=1
+       	and distribution_task_key=#{distributionTaskKey}
+        and user_key=#{userKey}
+    </update>
+     
+     <!-- 附件入库 -->
+    <insert id="fileAdd" parameterType="com.allook.mobile.bean.FileBean">
+    	insert into
+    		t_user_file
+    		(
+    		    user_file_key,
+    		    user_file_name,
+    		    user_key,
+    		    file_url,
+    		    show_status,
+    		    create_time,
+    		    creator,
+    		    order_num,
+    		    remarks,
+    		    image_url,
+    		    file_type,
+    		    distribution_task_key,
+    		    size,
+    		    duration,
+    		    update_time,
+    		    upload_type
+    		)
+    		values
+    		(
+    			#{userFileKey},
+    			#{userFileName},
+    			#{userKey},
+    			#{fileUrl},
+    			#{showStatus},
+    			#{createTime},
+    			#{creator},
+    			#{orderNum},
+    			#{remarks},
+    			#{imageUrl},
+    			#{fileType},
+    			#{distributionTaskKey},
+    			#{size},
+    			#{duration},
+    			#{updateTime},
+    			#{uploadType}
+    		)
+    </insert>
+    
+    <!-- 删除附件 -->
+    <update id="fileDelete" parameterType="com.allook.mobile.bean.FileBean">
+         update t_user_file set is_delete='1' where user_file_key=#{userFileKey}
+    </update>
+    
+    <!-- 修改附件名称 -->
+    <update id="fileUpdate" parameterType="com.allook.mobile.bean.FileBean">
+    	update 
+    		t_user_file
+    	set 
+    		user_file_name=#{userFileName}
+    		,update_time=#{updateTime}
+   			,remarks=#{remarks}
+   			,size=#{size}
+    	where 
+    		user_file_key=#{userFileKey}
+    </update>
+	
+	<!-- 获取文件列表 -->
+	<select id="fileList" parameterType="com.allook.mobile.bean.FileBean" resultMap="fileInfo">
+		select
+			user_file_key,
+			user_file_name,
+			user_key,
+			user_folder_key,
+			(
+				case 
+					when
+						file_url is null or file_url = 'null' or file_url = ''
+					then
+						''
+					else				
+						CONCAT('${fileDomain}','/',file_url)
+					end
+			) as file_url,
+			is_delete,
+			case when remarks is null then '' else remarks end remarks,
+			(
+				case 
+					when
+						image_url is null or image_url = 'null' or image_url = ''
+					then
+						''
+					else				
+						CONCAT('${imgDomain}','/',image_url)
+					end
+			) as image_url,
+			file_type,
+			distribution_task_key,
+			order_num,
+			creator,
+			show_status,
+			DATE_FORMAT(update_time,'%Y-%m-%d %H:%i') create_time,
+			size,
+			duration
+		from
+			t_user_file
+		<where>
+			<if test='userKey != null and userKey !="" and userKey !="null"'>
+				and user_key=#{userKey}
+			</if>
+			<if test='distributionTaskKey != null and distributionTaskKey !="" and distributionTaskKey !="null"'>
+				and distribution_task_key=#{distributionTaskKey}
+			</if>
+		</where>
+			and is_delete='0'
+		order by 
+			update_time 
+		desc
+	</select>
+	
+	<!-- 获取外采任务详情 -->
+	<select id="externalTaskDetail" parameterType="com.allook.mobile.bean.DistributionTaskBean"  resultMap="taskInfo">
+		select 
+			a.distribution_task_key,
+			a.distribution_task_title,
+			a.address,
+			date_format(a.distribution_task_time,'%Y-%m-%d %H:%i:%s') distribution_task_time,
+			a.selected_topic_key,
+			a.distribution_task_remarks,
+			b.user_task_status,
+			date_format(a.create_time,'%Y-%m-%d %H:%i') create_time,
+			a.creator,
+			a.order_num
+		from 
+			t_distribution_task a,
+			(
+				select 
+					distribution_task_key,user_task_status
+				from
+					t_user_task_relationship
+				where
+					user_key=#{userKey}
+			) b
+			where 
+			 a.distribution_task_key=b.distribution_task_key
+			and
+			 a.distribution_task_key=#{distributionTaskKey}
+	</select>
+	
+	<!-- 获取外采任务列表 -->
+	<select id="externalTasLlist" parameterType="com.allook.mobile.bean.DistributionTaskBean"  resultMap="taskInfo">
+		select 
+		    a.distribution_task_key,   
+			a.distribution_task_title,
+			a.address,
+			date_format(a.distribution_task_time,'%Y-%m-%d %H:%i:%s') distribution_task_time ,
+			a.selected_topic_key,
+			a.distribution_task_remarks,
+			b.user_task_status,
+			date_format(a.create_time,'%Y-%m-%d %H:%i:%s') create_time,
+			a.creator,
+			a.order_num
+		from 
+			t_distribution_task a,
+			(
+				select 
+					distribution_task_key,user_task_status
+				from
+					t_user_task_relationship
+				where
+					user_key=#{userKey}
+			) b
+		where 
+			 a.distribution_task_key=b.distribution_task_key
+			 <if test='distributionTaskTitle != null and distributionTaskTitle !="" and distributionTaskTitle !="null" '>
+			 	  and a.distribution_task_title LIKE CONCAT('%','${distributionTaskTitle}','%')
+			 </if>
+			 <if test='taskStatus != null and taskStatus !="" and taskStatus !="null"'>
+			  	  and b.user_task_status=#{taskStatus}
+			 </if>
+			 order by a.order_num asc,a.distribution_task_time desc
+	</select>
+	
+	<!-- 小编考核信息 -->
+	<select id="checkUserCheckInfo" parameterType="com.allook.mobile.bean.UserCheckBean" resultMap="userCheckInfo">
+		select 
+			a.user_key user_key,
+			a.real_name user_name,
+			b.news_count,
+			b.pv_count,
+			b.uv_count,
+			b.perviews
+		from
+			t_user a,
+			t_user_assessment b
+		where
+			1=1
+			and a.qk_account_key=b.qk_account_key
+			and a.qk_account_key=#{qkAccountKey}
+	</select>
+	
+	
+	<select id="checkRankList" parameterType="com.allook.mobile.bean.UserCheckBean" resultMap="userCheckInfo">
+		select 
+			a.user_key  user_key,
+			a.real_name user_name,
+			b.news_count,
+			b.pv_count,
+			b.uv_count,
+			b.perviews,
+			case when 
+          	    a.head_img_url is null or a.head_img_url='' 
+          	then '' 
+          	else  CONCAT('${imgDomain}',a.head_img_url) 
+          	end headImgUrl
+		from
+			t_user a,
+			t_user_assessment b
+		where
+			1=1
+			and a.qk_account_key=b.qk_account_key
+			and a.qk_account_key=#{qkAccountKey}
+			 <if test='type=="0" '>
+			 	order by  b.news_count   limit 3
+			 </if>
+			 <if test='type =="1"  '>
+			 	order by  b.pv_count   limit 3
+			 </if>
+			 <if test='type =="2"  '>
+			 	order by  b.uv_count   limit 3
+			 </if>
+	</select>
+	
+	
+	<!-- 插入一条消息提醒 -->
+	<insert id="addNotice" parameterType="com.allook.mobile.bean.NoticeBean" >
+		insert into t_notice_info
+			(
+				notice_key,
+				notice_content,
+				distribution_task_key,
+				selected_topic_key,
+				user_key,
+				status,
+				notice_type,
+				creator,
+				create_time
+			 )
+			 values
+			 (
+			 	#{noticeKey},
+			 	#{noticeContent},
+			 	#{distributionTaskKey},
+			 	#{selectedTopicKey},
+			 	#{userKey},
+			 	#{status},
+			 	#{noticeType},
+			 	#{creator},
+			 	#{createTime}
+			 )
+	</insert>
+	
+	
+	
+	<resultMap type="com.allook.local.bean.SelectedTopicBean"   	   id="resultSelectedTopic">
+    	<result property="selectedTopicKey" 									column="selected_topic_key"/>
+		<result property="selectedTopicTitile" 									column="selected_topic_titile"/>
+		<result property="selectedTopicDescript" 								column="selected_topic_descript"/>
+		<result property="departmentKey" 										column="department_key"/>
+		<result property="departmentName" 										column="department_name"/>
+		<result property="selectedTopicRemarks" 								column="selected_topic_remarks"/>
+		<result property="showStatus" 											column="show_status"/>
+		<result property="topicStatus" 											column="topic_status"/>
+		<result property="totalTask" 										    column="total_task"/>
+		<result property="createTime" 											column="create_time"/>
+		<result property="creator" 												column="creator"/>
+		<result property="orderNum" 											column="order_num"/>
+		<result property="auditTime"											column="audit_time"/>
+		<result property="auditName"											column="audit_name"/>
+		<result property="auditStatus"											column="audit_status"/>
+		<result property="refuseReason"											column="reason"/>
+	</resultMap>
+	<select id="getSelectedTopic" parameterType="com.allook.local.bean.SelectedTopicBean" resultMap="resultSelectedTopic">
+		 select
+		 	t.selected_topic_key,
+		 	t.selected_topic_titile,
+		 	t.selected_topic_descript,
+		 	t.department_key,
+		 	t.selected_topic_remarks,
+		 	t.show_status,
+		 	t.topic_status,
+		 	date_format(t.create_time, '%Y-%m-%d %H:%i:%s') create_time,
+		 	t.creator,
+		 	t.order_num,
+		 	t.total_task,
+		 	d.department_name
+		 from
+		 	t_selected_topic t left join t_department d on t.department_key = d.department_key
+		 where
+		 	1=1
+		 	and selected_topic_key=#{selectedTopicKey}
+	</select>
+	
+	
+	<resultMap type="com.allook.mobile.bean.NoticeBean"   	   id="noticeInfo">
+		<result property="userKey" 									column="user_key"/>
+		<result property="noticeKey" 								column="notice_key"/>
+	</resultMap>
+	<select id="getAppUserKeys"  parameterType="com.allook.mobile.bean.NoticeBean"  resultMap="noticeInfo" >
+		select 
+			user_key,
+			'${noticeKey}' notice_key
+		from 
+			t_user
+			where 1=1
+			and user_type=1
+	</select>
+	
+	
+	<insert id="addNoticeRelationship"  parameterType="com.allook.mobile.bean.NoticeBean">
+	    <if test=" paraList != null and paraList.size()>0">
+			insert into 
+				t_user_notice_relationship
+				(
+					relationship_key,
+					user_key,
+					notice_key
+				)
+				values
+			<foreach collection="paraList" item="item"  separator="," >
+				(
+					REPLACE(uuid(),'-',''),
+					#{item.userKey},
+					#{item.noticeKey}
+				)
+			</foreach>
+		</if>
+	</insert>
+	
+	
+	<update id="updateIsReturnContent" parameterType="com.allook.mobile.bean.DistributionTaskBean">
+		update 
+			t_user_task_relationship
+		set 
+			is_return_content=1
+		where
+			distribution_task_key=#{distributionTaskKey}
+			and user_key=#{userKey}
+	</update>
+	
+	<select id="getDepartment" parameterType="com.allook.mobile.bean.DepartmentBean" resultMap="departmentInfo">
+		select department_key, department_name from t_department order by order_num, department_key
+	</select>
+	
+	<!-- 找不到getDepartmentList方法，所以根据getDepartment增加该查询sql  栗超  20190507-->
+	<select id="getDepartmentList" parameterType="com.allook.mobile.bean.DepartmentBean" resultMap="departmentInfo">
+		select department_key, department_name from t_department order by order_num, department_key
+	</select>
+	
+	
+	<select id="getSelectTopicList" parameterType="com.allook.local.bean.SelectedTopicBean" resultMap="resultSelectedTopic">
+		select 
+			selected_topic_key, 
+			selected_topic_titile, 
+			date_format(create_time, '%Y %m.%d %H:%i:%s') create_time, 
+			topic_status
+		from 
+			t_selected_topic
+		where 
+			1=1
+			and creator = #{creator} 
+			order by create_time desc
+	</select>
+	
+	<insert id="addTopic" parameterType="com.allook.local.bean.SelectedTopicBean">
+		insert into t_selected_topic (selected_topic_key, selected_topic_titile, selected_topic_descript, department_key, 
+		selected_topic_remarks, show_status, topic_status, create_time, creator) values 
+		(#{selectedTopicKey}, #{selectedTopicTitile}, #{selectedTopicDescript}, #{departmentKey}, #{selectedTopicRemarks}, 
+		1, 4, now(), #{creator})
+	</insert>
+	
+	<select id="getAuditList" parameterType="com.allook.local.bean.SelectedTopicBean" resultMap="resultSelectedTopic">
+		select 
+			date_format(t.create_time, '%Y-%m-%d %H:%i:%s') audit_time, 
+			u.real_name audit_name,
+			t.status audit_status, 
+			t.reason 
+		from 
+			t_check_log_info t 
+			left join
+			t_check_info a
+			on t.out_key=a.group_key
+			left join 
+			t_user u 
+			on t.chek_user_key = u.user_key
+		where
+			1=1 
+			and a.out_key = #{selectedTopicKey} 
+			order by t.create_time desc
+	</select>
+	
+	<select id="getDictonaries" parameterType="String" resultMap="resultDict">
+		select dictionaries_value from t_dictionaries where dictionaries_name = #{code} limit 0,1
+	</select>
+	
+	<select id="getPunchList" parameterType="com.allook.mobile.bean.PunchBean" resultMap="punchInfo">
+		select 
+			punch_date, 
+			work_on_time, 
+			work_off_time, 
+			is_late, 
+			is_early, 
+			work_on_is_far, 
+			work_off_is_far,
+			work_on_far_reason, 
+			work_off_far_reason, 
+			work_on_punch_location, 
+			work_off_punch_location 
+		from 
+			t_punch 
+		where 
+			1=1
+			and user_id = #{userKey} 
+			and punch_year = #{punchYear} 
+			and punch_month = #{punchMonth}
+			<if test='punchDate !=null and punchDate !=""  '>
+			and punch_date=#{punchDate}
+			</if>
+			order by punch_date
+	</select>
+	
+	<select id="checkPunchByDate" parameterType="com.allook.mobile.bean.PunchBean" resultType="int">
+		select count(punch_id) from t_punch where user_id = #{userKey} and punch_date = #{punchDate}
+	</select>
+	
+	<insert id="addPunch" parameterType="com.allook.mobile.bean.PunchBean">
+		insert into t_punch (punch_id, user_id, punch_year, punch_month, punch_date, work_on_time, is_late, work_on_is_far, work_on_far_reason, 
+		work_on_punch_location) values (#{punchId}, #{userKey}, #{punchYear}, #{punchMonth}, #{punchDate}, #{workOnTime}, 
+		#{isLate}, #{workOnIsFar}, #{workOnFarReason}, #{workOnPunchLocation})
+	</insert>
+	
+	<update id="updatePunch" parameterType="com.allook.mobile.bean.PunchBean">
+		update t_punch set work_off_time=#{workOffTime}, is_early=#{isEarly}, work_off_is_far=#{workOffIsFar}, 
+		work_off_far_reason=#{workOffFarReason}, work_off_punch_location=#{workOffPunchLocation}
+		where user_id=#{userKey} and punch_date=#{punchDate}
+	</update>
+</mapper>

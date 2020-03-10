@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.allook.local.mapper.LocalSqlMapper">
+	  <resultMap type="com.allook.mobile.bean.UserBean"   	id="resultUserInfo">
+		<result property="userKey" 							column="user_key"/>
+		<result property="userName" 						column="user_name"/>
+		<result property="realName" 						column="real_name"/>
+		<result property="wyyxToken" 						column="wyyx_token"/>
+		<result property="headImgUrl" 						column="head_img_url"/>
+		<result property="password" 						column="password"/>
+	 </resultMap>
+	 <select id="getUserInfo"  parameterType="com.allook.mobile.bean.UserBean" resultMap="resultUserInfo">
+           select
+           	   user_key, 
+           	   user_name,
+           	   wyyx_token,
+           	   case when 
+           	    	head_img_url is null or head_img_url='' 
+           	    then '' 
+           	    else  CONCAT('${imgDomain}',head_img_url) 
+           	    end   head_img_url,
+           	   real_name,
+           	   password
+           from 
+           	   t_user
+           where
+           	   1=1
+           	   and user_key=#{userKey}
+     </select>
+</mapper>

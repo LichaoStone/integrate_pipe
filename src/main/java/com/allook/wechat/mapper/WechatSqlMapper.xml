@@ -1,0 +1,448 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.allook.wechat.mapper.WechatSqlMapper">
+	 <resultMap type="com.allook.mobile.bean.UserBean"   	id="userInfo">
+    	<result property="userKey" 							column="user_key"/>
+		<result property="userName" 						column="user_name"/>
+		<result property="realName" 						column="real_name"/>
+		<result property="qkAccountNumber" 					column="qk_account_number"/>
+		<result property="qkAccountKey" 					column="qk_account_key"/>
+		<result property="password" 						column="password"/>
+		<result property="headImgUrl" 						column="head_img_url"/>
+		<result property="phoneNumber" 						column="phone_number"/>
+		<result property="email" 							column="email"/>
+		<result property="roleKey" 							column="role_key"/>
+	</resultMap>
+	
+	<!-- 获取用户信息 -->
+    <select id="getUserInfo" parameterType="com.allook.mobile.bean.UserBean" resultMap="userInfo">
+    	select 
+    		user_key,
+    		user_name,
+    		real_name,
+    		qk_account_number,
+    		qk_account_key,
+    		password,
+    		CASE
+          	   	    WHEN head_img_url is null or head_img_url='' then ''
+			        WHEN head_img_url REGEXP '^[0-9]*[1-9][0-9]*$' THEN CONCAT('${userHeadIconLocalIp}','/user_head_',head_img_url,'.png')
+			        ELSE CONCAT('${userHeadIconQingkIp}',head_img_url)  
+		       END headImgUrl,
+    		phone_number,
+    		email,
+    		role_key,
+    		status
+    	from
+    		t_user
+    	where
+    		1=1
+    		and user_name=#{userName}
+    </select>
+    
+    <!-- 修改用户信息 -->
+    <update id="modifyUserInfo" parameterType="com.allook.mobile.bean.UserBean">
+    	update 
+    		t_user
+    		<set>
+    			<if test='realName !=null and realName !=""  '>
+	    			real_name=#{realName},
+	    		</if>
+	    		
+	    		<if test='headImgUrl !=null and headImgUrl !=""  '>
+	    			head_img_url=#{headImgUrl},
+	    		</if>
+	    		
+	    		<if test='phoneNumber !=null and phoneNumber !=""  '>
+	    			phone_number=#{phoneNumber},
+	    		</if>
+	    		
+	    		<if test='email !=null and email !=""  '>
+	    			email=#{email},
+	    		</if>
+    		</set>
+    	where
+    		user_name=#{userName}
+    </update>
+    
+    
+    <resultMap type="com.allook.mobile.bean.UserBean"   	id="statisticsMap">
+		<result property="realName" 						column="real_name"/>
+		<result property="headImgUrl" 						column="head_img_url"/>
+		<result property="countNum" 						column="countNum"/>
+	</resultMap>
+	
+    <!-- 获取统计信息数据 -->
+    <select id="statistics" parameterType="com.allook.mobile.bean.UserBean" resultMap="statisticsMap">
+    	select 
+    		c.*
+    	from
+    		(
+    			select 
+		    		count(a.manu_id) as countNum,
+		    		a.manu_user_id,
+		    		CASE
+          	   	    WHEN b.head_img_url is null or b.head_img_url='' then ''
+			        WHEN b.head_img_url REGEXP '^[0-9]*[1-9][0-9]*$' THEN CONCAT('${userHeadIconLocalIp}','/user_head_',b.head_img_url,'.png')
+			        ELSE CONCAT('${userHeadIconQingkIp}',b.head_img_url)  
+		      		END headImgUrl,
+		    		b.real_name as userName
+		 		from 
+		 			t_manuscript a,
+		 			t_user b
+		 		where 
+		 			1=1
+		 			and a.manu_user_id=b.user_key
+		 			and a.manu_state=1
+		 			<if test='beginDate !=null and beginDate !="" and  endDate !=null and endDate !="" '>
+		 					and a.manu_create_time between #{beginDate} and #{endDate}
+		 			</if>
+		 			group by a.manu_user_id
+    			
+    		) c
+    	where
+    		1=1
+    	    order by c.countNum desc
+    </select>
+    
+    
+     <resultMap type="com.allook.wechat.bean.ManuscriptBean"   	id="manuscriptMap">
+		<result property="manuId" 						    column="manu_id"/>
+		<result property="subId" 						    column="sub_id"/>
+		<result property="manuTitle" 						column="manu_title"/>
+		<result property="manuContent" 						column="manu_content"/>
+		<result property="manuImgUrl" 						column="manu_img_url"/>
+		<result property="manuCreateTime" 					column="manu_create_time"/>
+		<result property="manuUserId" 						column="manu_user_id"/>
+		<result property="manuState" 						column="manu_state"/>
+		<result property="manuUsage" 						column="manu_usage"/>
+		<result property="creator" 							column="creator"/>
+		<result property="subTitle" 						column="subTitle"/>
+		<result property="customerImg" 						column="customerImg"/>
+		<result property="manuSubTime" 						column="manu_sub_time"/>
+	</resultMap>
+	
+    <!-- 获取稿件列表 -->
+    <select id="getPapersList" parameterType="com.allook.wechat.bean.ManuscriptBean" resultMap="manuscriptMap">
+    	select 
+    		a.manu_id,
+    		a.sub_id,
+    		a.manu_title,
+    		a.manu_content,
+    		a.manu_img_url,
+    		date_format(a.manu_create_time,'%Y-%m-%d %H:%i:%s') manu_create_time,
+    		a.manu_user_id,
+    		a.manu_state,
+    		ifnull(a.manu_usage,"") manu_usage,
+    		b.user_name as creator,
+    		date_format(a.manu_sub_time,'%Y-%m-%d %H:%i:%s') manu_sub_time
+    	from
+    		t_manuscript a,
+		 	t_user b 
+    	where
+    		1=1
+    		and a.manu_user_id=b.user_key
+    		
+    		<if test='subId !=null and subId !=""  '>
+    			and a.sub_id=#{subId}
+    		</if>
+    		
+    		<if test='manuUserId == null or  manuUserId==""  '>
+    			and a.manu_state='1'
+    			order by a.manu_sub_time desc
+    		</if>
+    		
+    		
+    		<if test='manuUserId !=null and manuUserId !=""  '>
+    			and a.manu_user_id=#{manuUserId}
+    			order by a.manu_create_time desc
+    		</if>
+    </select>
+    
+    <!-- 获取详情页数据 -->
+    <select id="getPapersView" parameterType="com.allook.wechat.bean.ManuscriptBean" resultMap="manuscriptMap">
+    	 select 
+    	 	b.*,
+    	 	c.user_name creator,
+    	 	d.sub_title as subTitle,
+    	 	CASE
+        	   	WHEN c.head_img_url is null or c.head_img_url='' then ''
+	        	WHEN c.head_img_url REGEXP '^[0-9]*[1-9][0-9]*$' THEN CONCAT('${userHeadIconLocalIp}','/user_head_',c.head_img_url,'.png')
+	       	 	ELSE CONCAT('${userHeadIconQingkIp}',c.head_img_url)  
+      		END customerImg
+    	 from 
+    	 (
+	    	 select 
+		    		a.manu_id,
+		    		a.sub_id,
+		    		a.manu_title,
+		    		a.manu_content,
+		    		case when 
+		      	    	a.manu_img_url is null or a.manu_img_url='' 
+		      	    then '' 
+		      	    else  CONCAT('${imgDomain}',a.manu_img_url) 
+		      	    end   manu_img_url,
+		    		date_format(a.manu_create_time,'%Y-%m-%d %H:%i:%s') manu_create_time,
+		    		a.manu_user_id,
+		    		a.manu_state,
+		    		a.manu_usage
+		    	from
+		    		t_manuscript a
+		    	where
+		    		1=1
+		    		and  manu_id=#{manuId}
+    	 ) b
+    	 left join 
+    	 	t_user c
+    	 	on b.manu_user_id=c.user_key
+    	left join 
+    		t_subject d
+    	   on b.sub_id=d.sub_id	
+    </select>
+    
+    
+    <resultMap type="com.allook.wechat.bean.SubjectBean"   	id="subjectMap">
+		<result property="subId" 						    	column="sub_id"/>
+		<result property="subTitle" 						    column="sub_title"/>
+		<result property="subCreateTime" 						column="sub_create_time"/>
+		<result property="subContent" 						    column="sub_content"/>
+		<result property="subRemark" 						    column="sub_remark"/>
+		<result property="subUserId" 						    column="sub_user_id"/>
+		<result property="showStatus" 						    column="show_status"/>
+		<result property="orderNum" 						    column="order_num"/>
+		<result property="manuscriptCount" 						column="manuscriptCount"/>
+	</resultMap>
+    
+    <select id="getSubjectList" parameterType="com.allook.wechat.bean.SubjectBean" resultMap="subjectMap">
+    	 select 
+    		a.sub_id,
+    		a.sub_title,
+    		date_format(a.sub_create_time,'%Y-%m-%d %H:%i:%s') sub_create_time,
+    		a.sub_content,
+    		a.sub_remark,
+    		a.sub_user_id,
+    		a.show_status,
+    		a.order_num,
+    		case when b.countNum is null then 0 else b.countNum end countNum
+    	from
+    	    t_subject a 
+    	    left join
+    	    (
+    	    	select sub_id,count(sub_id) as countNum from t_manuscript where manu_state=1 group by sub_id
+    	    ) b
+    	    on a.sub_id=b.sub_id 
+    	    where
+    	    	1=1
+    	        order by a.sub_create_time desc
+    </select>	
+    
+    
+    <select id="getSubjectView" parameterType="com.allook.wechat.bean.SubjectBean" resultMap="subjectMap">
+    	select 
+    		b.*,
+    		case when c.countNum is null then 0 else c.countNum end countNum
+    	from
+    	(
+	    	select 
+	    		a.sub_id,
+	    		a.sub_title,
+	    		date_format(a.sub_create_time,'%Y-%m-%d %H:%i:%s') sub_create_time,
+	    		a.sub_content,
+	    		a.sub_remark,
+	    		a.sub_user_id,
+	    		a.show_status,
+	    		a.order_num
+	    	from
+	    	    t_subject a
+	    	where
+	    		1=1 
+	    	    and a.sub_id=#{subId}
+    	) b
+    	left join
+    		 ( 
+    		 	select 
+    		 		sub_id,
+    		 		count(sub_id) as countNum  
+    		 	from 
+    		 		t_manuscript 
+    		 	where 
+    		 		manu_state=1 
+    		 		group by sub_id 
+    		 ) c
+        on b.sub_id=c.sub_id
+         where
+        	1=1
+    </select>
+    
+    <insert id="addPapers"  parameterType="com.allook.wechat.bean.ManuscriptBean">
+    	insert into
+    		t_manuscript
+    		(
+    			manu_id,
+    			sub_id,
+    			manu_title,
+    			manu_content,
+    			manu_img_url,
+    			manu_create_time,
+    			manu_user_id,
+    			manu_state,
+    			manu_usage,
+    			manu_sub_time
+    		)
+    		values
+    		(
+    			#{manuId},
+    			#{subId},
+    			#{manuTitle},
+    			#{manuContent},
+    			#{manuImgUrl},
+    			#{manuCreateTime},
+    			#{manuUserId},
+    			#{manuState},
+    			#{manuUsage},
+    			#{manuSubTime}
+    		)
+    </insert>
+    
+    
+    <delete id="deletePapers" parameterType="com.allook.wechat.bean.ManuscriptBean">
+    	delete from t_manuscript where manu_id=#{manuId}
+    </delete>
+    
+    
+    <update id="modifyPapers" parameterType="com.allook.wechat.bean.ManuscriptBean">
+    	update 
+    		t_manuscript
+    	set 
+    		manu_img_url=#{manuImgUrl},
+    		manu_title=#{manuTitle},
+    		manu_content=#{manuContent},
+    		manu_state=#{manuState}
+    	where 
+    		manu_id=#{manuId}
+    </update>
+    
+    <select id="getSubjectRecommendList" resultMap="subjectMap">
+	    select 
+    		a.sub_id,
+    		a.sub_title,
+    		date_format(a.sub_create_time,'%Y-%m-%d %H:%i:%s') sub_create_time,
+    		a.sub_content,
+    		a.sub_remark,
+    		a.sub_user_id,
+    		a.show_status,
+    		a.order_num,
+    		case when b.countNum is null then 0 else b.countNum end manuscriptCount
+    	from
+    	    t_subject a 
+    	    left join
+    	    (
+    	    	select sub_id,count(sub_id) as countNum from t_manuscript where manu_state=1 group by sub_id
+    	    ) b
+    	    on a.sub_id=b.sub_id 
+    	    where
+    	    	1=1
+    	        order by a.sub_create_time desc
+    </select>
+    
+    
+    <select id="getMaterialList" parameterType="com.allook.mobile.bean.FileBean" resultType="map">
+    	 select 
+    	 	user_file_key as materialId,
+    	 	user_file_name as title,
+    	 	CONCAT('${imgDomain}',image_url)   as iconSrc,
+    	 	CONCAT('${imgDomain}',file_url)   as materialSrc, 
+    	 	date_format(create_time,'%Y-%m-%d %H:%i:%s') create_time,
+    	 	remarks as content,
+    	 	file_type as type,
+    	 	sub_id as topicId 
+    	 from
+    	 	t_user_file
+    	 where
+    	 	1=1
+    	 	and user_key=#{userKey}
+    	 	and file_type in ('img','text','video')
+    	 	and upload_type='2'
+    	 	<if test='subId !=null and subId !=""  '>
+    	 		and sub_id=#{subId}
+    	 	</if>
+    	 	order by order_num asc,create_time desc
+    </select>
+    
+    <!-- 通讯联动稿件采用情况 -->
+    <select id="adoptionList" parameterType="com.allook.wechat.bean.ManuscriptBean" resultType="map">
+    	select 
+    		c.*,
+    		d.real_name as customerName
+    	from
+    	(
+	    	select
+	    	 	date_format(b.create_time,'%Y-%m-%d %H:%i:%s') time,
+	    	 	ifnull(b.use_type,'') as adoption,
+	    	 	b.user_id
+	    	from 
+	    		t_manuscript a,
+	    		t_manuscript_use b
+	    	where
+	    		1=1
+	    		and a.manu_id=b.manuscript_id
+	    		and a.manu_id=#{manuId}
+	    		order by b.create_time asc
+    	) c
+    	left join 
+    		t_user d on c.user_id=d.user_key
+    </select>
+    
+    <update id="modifyStatusPapers" parameterType="com.allook.wechat.bean.ManuscriptBean">
+    	update 
+    		t_manuscript
+    	set
+    		manu_state=#{manuState},
+    		manu_sub_time=#{manuSubTime}
+    	where
+    		manu_id=#{manuId}
+    </update>
+    
+    
+    <insert id="addMaterial" parameterType="com.allook.mobile.bean.FileBean" >
+    	insert into 
+    		t_user_file
+    		(
+    			user_file_key,
+    			user_file_name,
+    			user_key,
+    			file_url,
+    			is_delete,
+    			remarks,
+    			image_url,
+    			file_type,
+    			order_num,
+    			creator,
+    			show_status,
+    			create_time,
+    			update_time,
+    			sub_id,
+    			source_type,
+    			upload_type
+    		)
+    		values 
+    		(
+    			#{userFileKey},
+    			#{userFileName},
+    			#{userKey},
+    			#{fileUrl},
+    			#{isDelete},
+    			#{remarks},
+    			#{imageUrl},
+    			#{fileType},
+    			#{orderNum},
+    			#{creator},
+    			#{showStatus},
+    			#{createTime},
+    			#{updateTime},
+    			#{subId},
+    			#{sourceType},
+    			#{uploadType}
+    		)
+    </insert>
+    
+</mapper>

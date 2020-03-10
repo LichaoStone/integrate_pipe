@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.allook.clouds.mapper.CloudsSqlMapper">
+    <!-- 网络热搜 
+    <select id="pushHotSearch"  parameterType="com.allook.clouds.bean.HotSearchBean" >
+          insert into t_hot_search
+          (
+          	  hot_search_key,
+          	  hot_search_content,
+          	  hot_degree,
+          	  source,
+          	  show_status,
+          	  create_time
+          )
+          	values
+          (
+              #{hotSearchKey},
+              #{hotSearchContent},
+              #{hotDegree},
+              #{source},
+              #{showStatus},
+              #{createTime}
+          )
+    </select>
+    -->
+    <!-- 全网实时热点 
+    <select id="pushHotNews"  parameterType="com.allook.clouds.bean.HotNewsBean" >
+          insert into t_hotspot_news_clue
+          (
+          	  hotspot_news_clue_key,
+          	  hotspot_news_clue_title,
+          	  hotspot_news_clue_descript,
+          	  source,
+          	  show_status,
+          	  type,
+          	  create_time,
+          	  order_num
+          )
+          	values
+          (
+              #{hotspotNewsClueKey},
+              #{hotspotNewsClueTitle},
+              #{hotspotNewsClueDescript},
+              #{source},
+              #{showStatus},
+              #{type},
+              #{createTime},
+              #{orderNum}
+          )
+    </select>
+    -->
+    
+    <!-- 地方舆论监控
+    <select id="pushLocalOpinion"  parameterType="com.allook.clouds.bean.LocalOpinionBean" >
+          insert into t_local_opinion
+          (
+          	  local_opinion_key,
+          	  comments_content,
+          	  nick_name,
+          	  show_status,
+          	  create_time,
+          	  creator,
+          	  order_num,
+          	  head_img_url
+          )
+          	values
+          (
+              #{localOpinionKey},
+              #{commentsContent},
+              #{nickName},
+              #{showStatus},
+              #{createTime},
+              #{creator},
+              #{orderNum},
+              #{headImgUrl}
+          )
+    </select>
+     -->
+    <!-- 地方新闻搜素 
+    <select id="pushLocalNews"  parameterType="com.allook.clouds.bean.LocalNewsBean" >
+          insert into t_hotspot_news_clue
+          (
+          	  hotspot_news_clue_key,
+          	  hotspot_news_clue_title,
+          	  hotspot_news_clue_descript,
+          	  source,
+          	  show_status,
+          	  type,
+          	  create_time,
+          	  order_num
+          )
+          	values
+          (
+              #{hotspotNewsClueKey},
+              #{hotspotNewsClueTitle},
+              #{hotspotNewsClueDescript},
+              #{source},
+              #{showStatus},
+              #{type},
+              #{createTime},
+              #{orderNum}
+          )
+    </select>
+    -->
+    <!-- 通话信息
+    <select id="pushVideoCallInfo"  parameterType="com.allook.clouds.bean.VideoCallInfoBean" >
+          insert into t_conversation_record
+          (
+          	  conversation_record_key,
+          	  channel_id,
+          	  createtime,
+          	  duration,
+          	  eventType,
+          	  live,
+          	  initiative_id,
+          	  initiative_duration,
+          	  passive_id,
+          	  passive_duration,
+          	  status,
+          	  type
+          )
+          	values
+          (
+              #{conversationRecordKey},
+              #{channelId},
+              #{createTime},
+              #{duration},
+              #{eventType},
+              #{live},
+              #{initiativeId},
+              #{initiativeDuration},
+              #{passiveId},
+              #{passiveDuration},
+              #{status},
+              #{type}
+          )
+    </select>
+     -->
+    <!-- 生产力统计 
+    <select id="pushProductivityStatistics"  parameterType="com.allook.clouds.bean.ProductivityStatisticsBean" >
+          insert into t_productivity_statistics
+          (
+          	  productivity_statistics_key,
+          	  qk_account_number,
+          	  count,
+          	  statistics_time,
+          	  create_time,
+          	  creator
+          )
+          	values
+          (
+              #{productivityStatisticsKey},
+              #{qkAccountNumber},
+              #{count},
+              #{statisticsTime},
+              #{createTime},
+              #{creator}
+          )
+    </select>
+    -->
+    <!-- 影响力力统计 
+    <select id="pushEffectStatistics"  parameterType="com.allook.clouds.bean.EffectStatisticsBean" >
+          insert into t_effect_statistics
+          (
+          	  effect_statistics_key,
+          	  pv_count,
+          	  uv_count,
+          	  statistics_time,
+          	  create_time,
+          	  creator
+          )
+          	values
+          (
+              #{effectStatisticsKey},
+              #{pvCount},
+              #{uvCount},
+              #{statisticsTime},
+              #{createTime},
+              #{creator}
+          )
+    </select>
+    -->
+    <!-- 资讯热榜 
+    <select id="pushInformationHot"  parameterType="com.allook.clouds.bean.InformationHotBean" >
+          insert into t_information_hot
+          (
+          	  information_hot_key,
+          	  synchronization_time,
+          	  information_title,
+          	  creator,
+          	  pv_count,
+          	  show_status,
+          	  create_time
+          )
+          	values
+          (
+              #{informationHotKey},
+              #{synchronizationTime},
+              #{informationTitle},
+              #{creator},
+              #{pvCount},
+              #{showStatus},
+              #{createTime}
+          )
+    </select>
+    -->
+    
+    <!-- 视频热榜
+    <select id="pushVideoHot"  parameterType="com.allook.clouds.bean.VideoHotBean" >
+          insert into t_video_hot
+          (
+          	  video_hot_key,
+          	  synchronization_time,
+          	  information_title,
+          	  creator,
+          	  play_count,
+          	  source,
+          	  show_status,
+          	  create_time
+          )
+          	values
+          (
+              #{videoHotKey},
+              #{synchronizationTime},
+              #{informationTitle},
+              #{creator},
+              #{playCount},
+              #{source},
+              #{showStatus},
+              #{createTime}
+          )
+    </select>
+    -->
+</mapper>
