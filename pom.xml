@@ -128,7 +128,7 @@
     <dependency>  
         <groupId>com.alibaba</groupId>  
         <artifactId>fastjson</artifactId>  
-        <version>1.2.28</version>  
+        <version>1.2.83</version>  
     </dependency>  
     <!-- for support web socket 注意,scope必须为provided,否则runtime会冲突，如果使用tomcat 8,还需要将TOMCAT_HOME/lib下的javax.websocket-api.jar一并删除 
     <dependency>  
